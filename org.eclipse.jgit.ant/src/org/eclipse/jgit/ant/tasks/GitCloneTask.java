@@ -50,7 +50,9 @@ import org.apache.tools.ant.Task;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.URIish;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
 /**
  * Clone a repository into a new directory.
@@ -64,6 +66,8 @@ public class GitCloneTask extends Task {
 	private File destination;
 	private boolean bare;
 	private String branch = Constants.HEAD;
+	private String username;
+	private String password;
 
 	/**
 	 * @param uri
@@ -101,7 +105,23 @@ public class GitCloneTask extends Task {
 	public void setBranch(String branch) {
 		this.branch = branch;
 	}
-
+	
+    /**
+     * @param username
+     *            username to be supplied to credentials
+     */
+	public void setUsername(String username) {
+        this.username = username;
+    }
+	
+    /**
+     * @param password
+     *            username to be supplied to credentials
+     */
+    public void setPassword(String password) {
+        this.password = password;
+    }
+	
 	@Override
 	public void execute() throws BuildException {
 		log("Cloning repository " + uri);
@@ -109,6 +129,10 @@ public class GitCloneTask extends Task {
 		CloneCommand clone = Git.cloneRepository();
 		try {
 			clone.setURI(uri).setDirectory(destination).setBranch(branch).setBare(bare);
+			if(username != null){
+			    CredentialsProvider credentialsProvider = new UsernamePasswordCredentialsProvider(username, password);
+			    clone.setCredentialsProvider(credentialsProvider);
+			}
 			clone.call().getRepository().close();
 		} catch (Exception e) {
 			log("Could not clone repository: " + e, e, Project.MSG_ERR);
